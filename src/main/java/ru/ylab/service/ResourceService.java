@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import ru.ylab.model.Booking;
 import ru.ylab.model.Resource;
+import ru.ylab.model.TimeSlot;
 import ru.ylab.repository.ResourceRepository;
 
 public class ResourceService {
@@ -60,20 +61,20 @@ public class ResourceService {
         return resourceRepository;
     }
 
-    public List<ru.ylab.model.TimeSlot> getAvailableTimeSlots(LocalDate date, int durationMinutes) {
+    public List<TimeSlot> getAvailableTimeSlots(LocalDate date, int durationMinutes) {
         List<Resource> allResources = resourceRepository.getAllResources();
-        List<ru.ylab.model.TimeSlot> availableSlots = new ArrayList<>();
+        List<TimeSlot> availableSlots = new ArrayList<>();
 
         for (Resource resource : allResources) {
-            List<ru.ylab.model.TimeSlot> resourceSlots = getAvailableSlotsForResource(resource, date, durationMinutes);
+            List<TimeSlot> resourceSlots = getAvailableSlotsForResource(resource, date, durationMinutes);
             availableSlots.addAll(resourceSlots);
         }
 
         return availableSlots;
     }
 
-    private List<ru.ylab.model.TimeSlot> getAvailableSlotsForResource(Resource resource, LocalDate date, int durationMinutes) {
-        List<ru.ylab.model.TimeSlot> availableSlots = new ArrayList<>();
+    private List<TimeSlot> getAvailableSlotsForResource(Resource resource, LocalDate date, int durationMinutes) {
+        List<TimeSlot> availableSlots = new ArrayList<>();
         LocalTime startTime = LocalTime.of(9, 0); // Предполагаем, что рабочий день начинается в 9:00
         LocalTime endTime = LocalTime.of(18, 0);  // и заканчивается в 18:00
 
@@ -87,7 +88,7 @@ public class ResourceService {
             LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
 
             if (isSlotAvailable(slotStart, slotEnd, resourceBookings)) {
-                availableSlots.add(new ru.ylab.model.TimeSlot(resource, slotStart, slotEnd));
+                availableSlots.add(new TimeSlot(resource, slotStart, slotEnd));
             }
 
             startTime = startTime.plusMinutes(30); // Шаг в 30 минут
