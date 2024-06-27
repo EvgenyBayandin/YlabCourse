@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001-create-schema" author="webdev">
+        <sql>CREATE SCHEMA IF NOT EXISTS coworking_schema;</sql>
+    </changeSet>
+
+    <changeSet id="002-create-tables" author="webdev">
+
+
+        <createSequence sequenceName="user_seq" schemaName="coworking_schema"/>
+        <createSequence sequenceName="workspace_seq" schemaName="coworking_schema"/>
+        <createSequence sequenceName="conference_room_seq" schemaName="coworking_schema"/>
+        <createSequence sequenceName="booking_seq" schemaName="coworking_schema"/>
+        <createSequence sequenceName="time_slot_seq" schemaName="coworking_schema"/>
+
+        <createTable tableName="users" schemaName="coworking_schema">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="user_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="username" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="password" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_admin" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="workspaces" schemaName="coworking_schema">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="workspace_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="capacity" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="conference_rooms" schemaName="coworking_schema">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="conference_room_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(255)">
+                <constraints unique="true" nullable="false"/>
+            </column>
+            <column name="capacity" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="bookings" schemaName="coworking_schema">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="booking_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="user_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="resource_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="time_slots" schemaName="coworking_schema">
+            <column name="id" type="BIGINT" defaultValueSequenceNext="time_slot_seq">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="resource_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>
