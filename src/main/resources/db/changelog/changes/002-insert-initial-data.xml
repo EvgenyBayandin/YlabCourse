@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
+
+    <changeSet id="001" author="your_name">
+        <insert tableName="users" schemaName="coworking_schema">
+            <column name="username" value="admin"/>
+            <column name="password" value="password"/>
+            <column name="is_admin" value="true"/>
+        </insert>
+
+
+        <insert tableName="users" schemaName="coworking_schema">
+            <column name="username" value="user"/>
+            <column name="password" value="password"/>
+            <column name="is_admin" value="false"/>
+        </insert>
+
+        <insert tableName="workspaces" schemaName="coworking_schema">
+            <column name="name" value="Workspace A"/>
+            <column name="capacity" value="100"/>
+        </insert>
+
+        <insert tableName="workspaces" schemaName="coworking_schema">
+            <column name="name" value="Workspace B"/>
+            <column name="capacity" value="200"/>
+        </insert>
+
+        <insert tableName="workspaces" schemaName="coworking_schema">
+            <column name="name" value="Workspace C"/>
+            <column name="capacity" value="50"/>
+        </insert>
+
+        <insert tableName="conference_rooms" schemaName="coworking_schema">
+            <column name="name" value="Conference room A"/>
+            <column name="capacity" value="10"/>
+        </insert>
+
+        <insert tableName="conference_rooms" schemaName="coworking_schema">
+            <column name="name" value="Conference room B"/>
+            <column name="capacity" value="20"/>
+        </insert>
+
+        <insert tableName="conference_rooms" schemaName="coworking_schema">
+            <column name="name" value="Conference room C"/>
+            <column name="capacity" value="50"/>
+        </insert>
+
+    </changeSet>
+</databaseChangeLog>
