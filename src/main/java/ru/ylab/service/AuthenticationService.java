@@ -1,5 +1,6 @@
 package ru.ylab.service;
 
+import java.sql.SQLException;
 import ru.ylab.model.User;
 import ru.ylab.repository.UserRepository;
 
@@ -16,7 +17,7 @@ public class AuthenticationService {
         this.userRepository = userRepository;
     }
 
-    public User authenticate(String username, String password){
+    public User authenticate(String username, String password) throws SQLException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if(!user.getPassword().equals(password)){
