@@ -2,29 +2,33 @@ package ru.ylab.model;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
+@Data
+@AllArgsConstructor
 public class TimeSlot {
     private Resource resource;
     private LocalDateTime start;
     private LocalDateTime end;
 
-    public TimeSlot(Resource resource, LocalDateTime start, LocalDateTime end) {
-        this.resource = resource;
-        this.start = start;
-        this.end = end;
-    }
-
-    public Resource getResource() {
-        return resource;
-    }
-
-    public LocalDateTime getStart() {
-        return start;
-    }
-
-    public LocalDateTime getEnd() {
-        return end;
-    }
+//    public TimeSlot(Resource resource, LocalDateTime start, LocalDateTime end) {
+//        this.resource = resource;
+//        this.start = start;
+//        this.end = end;
+//    }
+//
+//    public Resource getResource() {
+//        return resource;
+//    }
+//
+//    public LocalDateTime getStart() {
+//        return start;
+//    }
+//
+//    public LocalDateTime getEnd() {
+//        return end;
+//    }
 
     @Override
     public String toString() {
