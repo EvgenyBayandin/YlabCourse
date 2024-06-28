@@ -1,20 +1,25 @@
 package ru.ylab.repository;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.util.List;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import ru.ylab.model.User;
-
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
+import ru.ylab.util.DatabaseManager;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Tests for UserRepository.
+ * These tests use Testcontainers to spin up a PostgreSQL database for each test.
+ * Ensure Docker is running on your machine before executing these tests.
+ */
 @Testcontainers
 class UserRepositoryTest {
 
@@ -29,7 +34,8 @@ class UserRepositoryTest {
     @BeforeEach
     void setUp() throws SQLException {
         Connection connection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
-        userRepository = new UserRepository(connection);
+        DatabaseManager testDatabaseManager = new UserRepositoryTest.TestDatabaseManager(connection);
+        userRepository = new UserRepository(testDatabaseManager);
 
         // Создаем таблицу users для тестов
         try (var statement = connection.createStatement()) {
@@ -135,4 +141,18 @@ class UserRepositoryTest {
         assertTrue(foundUser.isPresent());
         assertEquals("findbyid", foundUser.get().getUsername());
     }
+
+    class TestDatabaseManager extends DatabaseManager {
+        private static Connection connection = null;
+
+        public TestDatabaseManager(Connection connection) {
+            this.connection = connection;
+        }
+
+
+        public static Connection getConnection() throws SQLException {
+            return connection;
+        }
+    }
+
 }
