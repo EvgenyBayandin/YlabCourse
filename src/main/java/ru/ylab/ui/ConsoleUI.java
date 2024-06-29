@@ -1,5 +1,6 @@
 package ru.ylab.ui;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,6 +15,10 @@ import ru.ylab.service.BookingService;
 import ru.ylab.service.ResourceService;
 import ru.ylab.service.UserService;
 
+/**
+ * ConsoleUI class represents the user interface for the resource booking system.
+ * It handles user interactions through a console-based menu system.
+ */
 public class ConsoleUI {
     private InputReader inputReader;
     private OutputWriter outputWriter;
@@ -24,7 +29,17 @@ public class ConsoleUI {
 
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
-    public ConsoleUI(InputReader inputReader, OutputWriter outputWriter, UserService userService, ResourceService resourceService, BookingService bookingService, AuthenticationService authenticationService) {
+    /**
+     * Constructs a ConsoleUI with necessary services and I/O handlers.
+     *
+     * @param inputReader           Input reader for user input
+     * @param outputWriter          Output writer for displaying information
+     * @param userService           Service for user-related operations
+     * @param resourceService       Service for resource-related operations
+     * @param bookingService        Service for booking-related operations
+     * @param authenticationService Service for authentication operations
+     */
+    public ConsoleUI(InputReader inputReader, OutputWriter outputWriter, UserService userService, ResourceService resourceService, BookingService bookingService, AuthenticationService authenticationService) throws SQLException {
         this.inputReader = inputReader;
         this.outputWriter = outputWriter;
         this.userService = userService;
@@ -34,9 +49,12 @@ public class ConsoleUI {
     }
 
     /**
-     *  Запускаем вход в систему через консольное меню
+     * Starts the console user interface.
+     * This method runs the main loop of the application, handling login and main menu operations.
+     *
+     * @throws SQLException if a database access error occurs
      */
-    public void run() {
+    public void run() throws SQLException {
         while (true) {
             if (!authenticationService.isAuthenticated()) {
                 showLoginMenu();
@@ -47,11 +65,7 @@ public class ConsoleUI {
     }
 
     /**
-     *  Выводит первичное меню на экран
-     *  1. Login - меню для входа в систему для существующих пользователей
-     *  2. Register  - меню для регистрации нового пользователя
-     *  3. Exit  - выход и остановка приложения
-     *  Choose an option: - ожидание ввода выбранного пункта меню
+     * Displays the login menu and handles user input for login operations.
      */
     private void showLoginMenu() {
         while (true) {
@@ -82,18 +96,11 @@ public class ConsoleUI {
     }
 
     /**
-     *  Выводит главное меню на экран
-     *  1. View available resources - просмотр списка доступных ресурсов
-     *  2. Make a booking  - создание бронирования
-     *  3. View my bookings  - посмотреть список моих бронирований
-     *  4. Cancel a booking - отмена бронирования
-     *  5. View available time slots - просмотр списка доступных временных интервалов для бронирования
-     *  6. Filter bookings - переход в меню для фильтрации бронирований по параметрам
-     *  7. logout - разлогирование и переход в первоначальное меню
-     *  8. Admin menu - переход в меню для администратора (если пользователь является администратором) пункт не доступен обычным пользователям
-     *  Choose an option: - ожидание ввода выбранного пункта меню
+     * Displays the main menu and handles user input for various operations.
+     *
+     * @throws SQLException if a database access error occurs
      */
-    private void showMainMenu() {
+    private void showMainMenu() throws SQLException {
         while (true) {
             if (!authenticationService.isAuthenticated()) {
                 return;
@@ -153,7 +160,7 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод для аутентификации пользователя и вход в систему
+     * Handles the user login process.
      */
     private void login() {
         outputWriter.print("Enter username: ");
@@ -167,11 +174,13 @@ public class ConsoleUI {
             outputWriter.printLine("Login successful. Welcome, " + user.getUsername());
         } catch (IllegalArgumentException e) {
             outputWriter.printLine("Login failed: " + e.getMessage());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * Метод регистрации нового пользователя и переход в меню для входа в систему
+     * Handles the user registration process.
      */
     private void register() {
         outputWriter.print("Enter username: ");
@@ -184,12 +193,13 @@ public class ConsoleUI {
             outputWriter.printLine("Registration successful. Please login.");
         } catch (IllegalArgumentException e) {
             outputWriter.printLine("Registration failed: " + e.getMessage());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
-
     /**
-     * Метод для вывода списка доступных ресурсов
+     * Displays available resources for a specified time period.
      */
     private void viewAvailableResources() {
         outputWriter.print("Enter start date and time (yyyy-MM-dd HH:mm): ");
@@ -220,7 +230,7 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод для создания бронирования
+     * Handles the process of making a new booking.
      */
     private void makeBooking() {
         outputWriter.print("Enter start date and time (yyyy-MM-dd HH:mm): ");
@@ -240,7 +250,8 @@ public class ConsoleUI {
 
             outputWriter.printLine("Available resources:");
             for (Resource resource : availableResources) {
-                outputWriter.printLine(resource.getId() + ": " + resource.getName() +
+                outputWriter.printLine(resource.getId() +
+                        ": " + resource.getName() +
                         " (Type: " + resource.getClass().getSimpleName() +
                         ", Capacity: " + resource.getCapacity() + ")");
             }
@@ -263,9 +274,11 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод для просмотра бронирований пользователя
+     * Displays all bookings for the current user.
+     *
+     * @throws SQLException if a database access error occurs
      */
-    private void viewMyBookings() {
+    private void viewMyBookings() throws SQLException {
         User currentUser = authenticationService.getCurrentUser();
         List<Booking> myBookings = bookingService.getBookingsByUser(currentUser);
         if (myBookings.isEmpty()) {
@@ -273,19 +286,22 @@ public class ConsoleUI {
         } else {
             outputWriter.printLine("Your bookings:");
             for (Booking booking : myBookings) {
-                outputWriter.printLine("ID: " + booking.getId() +
-                        ", Resource: " + booking.getResource().getName() +
-                        " (ID: " + booking.getResource().getId() + ")" +
-                        ", From: " + booking.getStartTime().format(DATE_TIME_FORMATTER) +
-                        ", To: " + booking.getEndTime().format(DATE_TIME_FORMATTER));
+                outputWriter.printLine(
+                        "ID: " + booking.getId() +
+                                ", Resource: " + booking.getResource().getName() +
+                                " (ID: " + booking.getResource().getId() + ")" +
+                                ", From: " + booking.getStartTime().format(DATE_TIME_FORMATTER) +
+                                ", To: " + booking.getEndTime().format(DATE_TIME_FORMATTER));
             }
         }
     }
 
     /**
-     * Метод отмены бронирования пользователя
+     * Handles the process of canceling a booking.
+     *
+     * @throws SQLException if a database access error occurs
      */
-    private void cancelBooking() {
+    private void cancelBooking() throws SQLException {
         User currentUser = authenticationService.getCurrentUser();
         List<Booking> userBookings = bookingService.getBookingsByUser(currentUser);
 
@@ -306,7 +322,7 @@ public class ConsoleUI {
             }
 
             if (bookingId == 0) {
-                return; // Возвращаемся в предыдущее меню
+                return;
             }
 
             try {
@@ -315,7 +331,6 @@ public class ConsoleUI {
                         .findFirst()
                         .orElseThrow(() -> new IllegalArgumentException("Booking not found"));
 
-                // Подтверждение отмены
                 outputWriter.printLine("Are you sure you want to cancel this booking?");
                 outputWriter.printLine("Booking details: " + bookingToCancel.toString());
                 outputWriter.print("Enter 'yes' to confirm or any other input to cancel: ");
@@ -337,7 +352,7 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод для просмотра списка достыпных таймслотов для конкретного дня
+     * Displays available time slots for a specific date and duration.
      */
     private void viewAvailableTimeSlots() {
         LocalDate date = null;
@@ -393,9 +408,11 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод перехода в меню и фильртации бронирований по параметрам
+     * Handles the process of filtering bookings based on various criteria.
+     *
+     * @throws SQLException if a database access error occurs
      */
-    private void filterBookings() {
+    private void filterBookings() throws SQLException {
         while (true) {
             outputWriter.printLine("Filter bookings by:");
             outputWriter.printLine("1. Date");
@@ -444,7 +461,10 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод фильтрации бронирований по дате
+     * Filters bookings by a specific date.
+     * Prompts the user to enter a date and retrieves all bookings for that date.
+     *
+     * @return A list of bookings for the specified date, or an empty list if the date is invalid
      */
     private List<Booking> filterBookingsByDate() {
         outputWriter.print("Enter date (yyyy-MM-dd): ");
@@ -455,11 +475,16 @@ public class ConsoleUI {
         } catch (DateTimeParseException e) {
             outputWriter.printLine("Invalid date format. Please use yyyy-MM-dd.");
             return new ArrayList<>();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
         }
     }
 
     /**
-     * Метод фильтрации бронирований по пользователю
+     * Filters bookings by a specific user.
+     * Prompts the user to enter a username and retrieves all bookings for that user.
+     *
+     * @return A list of bookings for the specified user, or null if the user chooses to go back
      */
     private List<Booking> filterBookingsByUser() {
         while (true) {
@@ -475,23 +500,31 @@ public class ConsoleUI {
                 return bookingService.getBookingsByUser(user);
             } catch (IllegalArgumentException e) {
                 outputWriter.printLine("User not found. Please try again.");
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
             }
         }
     }
 
     /**
-     * Метод фильтрации бронирований по ресурсу
+     * Filters bookings by a specific resource.
+     * Displays a list of available resources and prompts the user to select one.
+     *
+     * @return A list of bookings for the selected resource, or null if the user chooses to go back
+     * @throws SQLException if there's an error accessing the database
      */
-    private List<Booking> filterBookingsByResource() {
-        List<Resource> allResources  = resourceService.getAllResources();
-        if (allResources.isEmpty())  {
+    private List<Booking> filterBookingsByResource() throws SQLException {
+        List<Resource> allResources = resourceService.getAllResources();
+        if (allResources.isEmpty()) {
             outputWriter.printLine("No resources found.");
             return null;
         }
 
         outputWriter.printLine("Available resources:");
         for (Resource resource : allResources) {
-            outputWriter.printLine(resource.getId() + ": " + resource.getName() + ", capacity: " + resource.getCapacity());
+            outputWriter.printLine(resource.getId() +
+                    ": " + resource.getName() +
+                    ", capacity: " + resource.getCapacity());
         }
 
         while (true) {
@@ -511,12 +544,14 @@ public class ConsoleUI {
                 outputWriter.printLine("Resource not found. Please try again.");
                 continue;
             }
-            return bookingService.getBookingsByResources(resource);
+            return bookingService.getBookingsByResource(resource);
         }
     }
 
     /**
-     * Метод вывода списка бронирований
+     * Displays a list of bookings.
+     *
+     * @param bookings The list of bookings to display
      */
     private void displayBookings(List<Booking> bookings) {
         if (bookings.isEmpty()) {
@@ -535,16 +570,11 @@ public class ConsoleUI {
     }
 
     /**
-     *  Выводит меню администратора на экран
-     *  1. Add new resource - добавление нового ресурса
-     *  2. View all resources - список всех ресурсов
-     *  3. Update resource - обновление ресурса
-     *  4. Remove resource - удаление ресурса
-     *  5. View all bookings - список всех бронирований
-     *  6. Back to main menu - возврат в главное меню
-     *  Choose an option: - ожидание ввода выбранного пункта меню
+     * Displays the admin menu and handles admin operations.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void showAdminMenu() {
+    private void showAdminMenu() throws SQLException {
         while (true) {
             outputWriter.printLine("Admin menu:");
             outputWriter.printLine("1. Add new resource");
@@ -586,9 +616,12 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод для создания нового ресурса
+     * Adds a new resource to the system.
+     * Prompts the admin for resource details and creates a new resource.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void addNewResource() {
+    private void addNewResource() throws SQLException {
         outputWriter.printLine("Adding new resource:");
 
         Integer type = null;
@@ -628,26 +661,33 @@ public class ConsoleUI {
 
 
     /**
-     * Метод для вывода списка всех ресурсов
+     * Displays all resources in the system.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void viewAllResources() {
+    private void viewAllResources() throws SQLException {
         List<Resource> resources = resourceService.getAllResources();
         if (resources.isEmpty()) {
             outputWriter.printLine("No resources available.");
         } else {
             outputWriter.printLine("All resources:");
             for (Resource resource : resources) {
-                outputWriter.printLine(resource.getId() + ": " + resource.getName() +
+                outputWriter.printLine(resource.getId() +
+                        ": " + resource.getName() +
                         " (Type: " + resource.getClass().getSimpleName() +
-                        ", Capacity: " + resource.getCapacity() + ")");
+                        ", Capacity: " + resource.getCapacity() +
+                        ")");
             }
         }
     }
 
     /**
-     * Метод для изменения ресурса по его ID
+     * Updates an existing resource in the system.
+     * Prompts the admin to select a resource and enter new details.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void updateResource() {
+    private void updateResource() throws SQLException {
         List<Resource> resources = resourceService.getAllResources();
         if (resources.isEmpty()) {
             outputWriter.printLine("No resources available.");
@@ -703,9 +743,12 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод удаления ресурса по его ID
+     * Removes a resource from the system.
+     * Prompts the admin to select a resource for removal and confirms the action.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void removeResource() {
+    private void removeResource() throws SQLException {
         List<Resource> resources = resourceService.getAllResources();
         if (resources.isEmpty()) {
             outputWriter.printLine("No resources available.");
@@ -732,9 +775,14 @@ public class ConsoleUI {
 
                 // Подтверждение удаления
                 outputWriter.printLine("Are you sure you want to remove this resource?");
-                outputWriter.printLine("Resource: " + resourceToRemove.getName() + " (ID: " + resourceToRemove.getId() + ")");
+                outputWriter.printLine("Resource: " +
+                        resourceToRemove.getName() +
+                        " (ID: " + resourceToRemove.getId() +
+                        ")");
                 outputWriter.print("Enter 'yes' to confirm or any other input to cancel: ");
-                String confirmation = inputReader.readLine().trim().toLowerCase();
+                String confirmation = inputReader.readLine()
+                        .trim()
+                        .toLowerCase();
 
                 if (confirmation.equals("yes")) {
                     resourceService.deleteResource(resourceToRemove);
@@ -750,9 +798,11 @@ public class ConsoleUI {
     }
 
     /**
-     * Метод вывода списка всех бронирований
+     * Displays all bookings in the system.
+     *
+     * @throws SQLException if there's an error accessing the database
      */
-    private void viewAllBookings() {
+    private void viewAllBookings() throws SQLException {
         List<Booking> allBookings = bookingService.getAllBookings();
         if (allBookings.isEmpty()) {
             outputWriter.printLine("There are no bookings");
