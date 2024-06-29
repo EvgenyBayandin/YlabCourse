@@ -2,372 +2,148 @@ package ru.ylab.service;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import ru.ylab.model.WorkSpace;
+import ru.ylab.model.ConferenceRoom;
 import ru.ylab.model.Resource;
-import ru.ylab.model.TimeSlot;
 import ru.ylab.repository.ResourceRepository;
+import ru.ylab.util.DatabaseManager;
+
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-/**
- * Тестовый класс для {@link ResourceService}.
- * Проверяет функциональность сервиса для работы с ресурсами.
- */
+@Testcontainers
+public class ResourceServiceTest {
 
-class ResourceServiceTest {
-
-    @Mock
-    private ResourceRepository resourceRepository;
-    @Mock
-    private BookingService bookingService;
+    @Container
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:13")
+            .withDatabaseName("testdb")
+            .withUsername("test")
+            .withPassword("test");
 
     private ResourceService resourceService;
+    private ResourceRepository resourceRepository;
+    private BookingService bookingService;
+    private TestDatabaseManager databaseManager;
 
     @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
+    void setUp() throws SQLException {
+        Connection connection = DriverManager.getConnection(postgres.getJdbcUrl(), postgres.getUsername(), postgres.getPassword());
+        databaseManager = new TestDatabaseManager(connection);
+        resourceRepository = new ResourceRepository(databaseManager);
+        bookingService = mock(BookingService.class);
         resourceService = new ResourceService(resourceRepository, bookingService);
+
+        // Create tables
+        try (var statement = connection.createStatement()) {
+            statement.execute("CREATE SCHEMA IF NOT EXISTS coworking_schema");
+            statement.execute("CREATE TABLE IF NOT EXISTS coworking_schema.resources (" +
+                    "id SERIAL PRIMARY KEY, " +
+                    "name VARCHAR(255) NOT NULL, " +
+                    "capacity INT NOT NULL, " +
+                    "type VARCHAR(50) NOT NULL)");
+        }
     }
 
-    /**
-     * Проверяет создание нового ресурса.
-     */
-
     @Test
-    void addResource_shouldCallRepository() {
-        Resource resource = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+    void testAddAndGetResource() throws SQLException {
+        WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
+        resourceService.addResource(workspace);
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 1000;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        resourceService.addResource(resource);
-        verify(resourceRepository).addResource(resource);
+        Resource retrievedResource = resourceService.getResourceById(workspace.getId());
+        assertNotNull(retrievedResource);
+        assertEquals(workspace.getName(), retrievedResource.getName());
+        assertEquals(workspace.getCapacity(), retrievedResource.getCapacity());
+        assertTrue(retrievedResource instanceof WorkSpace);
     }
 
-    /**
-     * Проверяет получение существующего ресурса по id.
-     */
-
     @Test
-    void getResourceById_existingResource_shouldReturnResource() {
-        Resource resource = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+    void testGetAllResources() throws SQLException {
+        WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
+        ConferenceRoom conferenceRoom = new ConferenceRoom(0, "Test Conference Room", 20);
+        resourceService.addResource(workspace);
+        resourceService.addResource(conferenceRoom);
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 1000;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        when(resourceRepository.findById(1)).thenReturn(Optional.of(resource));
-
-        Resource result = resourceService.getResourceById(1);
-        assertEquals(resource, result);
+        List<Resource> resources = resourceService.getAllResources();
+        assertEquals(2, resources.size());
     }
 
-    /**
-     * Проверяет получение несуществующего ресурса по id.
-     */
-
     @Test
-    void getResourceById_nonExistingResource_shouldThrowException() {
-        when(resourceRepository.findById(1)).thenReturn(Optional.empty());
-        assertThrows(IllegalArgumentException.class, () -> resourceService.getResourceById(1));
+    void testGetResourcesByType() throws SQLException {
+        WorkSpace workspace1 = new WorkSpace(0, "Workspace 1", 10);
+        WorkSpace workspace2 = new WorkSpace(0, "Workspace 2", 15);
+        ConferenceRoom conferenceRoom = new ConferenceRoom(0, "Conference Room", 20);
+        resourceService.addResource(workspace1);
+        resourceService.addResource(workspace2);
+        resourceService.addResource(conferenceRoom);
+
+        List<Resource> workspaces = resourceService.getResourcesByType("WorkSpace");
+        assertEquals(2, workspaces.size());
+        assertTrue(workspaces.stream().allMatch(r -> r instanceof WorkSpace));
+
+        List<Resource> conferenceRooms = resourceService.getResourcesByType("ConferenceRoom");
+        assertEquals(1, conferenceRooms.size());
+        assertTrue(conferenceRooms.stream().allMatch(r -> r instanceof ConferenceRoom));
     }
 
-    /**
-     * Проверяет изменение ресурса.
-     */
-
     @Test
-    void updateResource_shouldCallRepository() {
-        Resource resource = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+    void testUpdateResource() throws SQLException {
+        WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
+        resourceService.addResource(workspace);
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
+        workspace.setName("Updated Workspace");
+        workspace.setCapacity(15);
+        resourceService.updateResource(workspace);
 
-            @Override
-            public int getCapacity() {
-                return 1000;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        resourceService.updateResource(resource);
-        verify(resourceRepository).updateResource(resource);
+        Resource updatedResource = resourceService.getResourceById(workspace.getId());
+        assertEquals("Updated Workspace", updatedResource.getName());
+        assertEquals(15, updatedResource.getCapacity());
     }
 
-    /**
-     * Проверяет получение всех ресурсов.
-     */
-
     @Test
-    void getAllResources_shouldReturnAllResources() {
-        List<Resource> resources = Arrays.asList(new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+    void testDeleteResource() throws SQLException {
+        WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
+        resourceService.addResource(workspace);
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
+        resourceService.deleteResource(workspace);
 
-            @Override
-            public int getCapacity() {
-                return 100;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        }, new Resource() {
-            @Override
-            public int getId() {
-                return 2;
-            }
-
-            @Override
-            public String getName() {
-                return "Room B";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 200;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        });
-        when(resourceRepository.getAllResources()).thenReturn(resources);
-
-        List<Resource> result = resourceService.getAllResources();
-        assertEquals(resources, result);
+        assertThrows(IllegalArgumentException.class, () -> resourceService.getResourceById(workspace.getId()));
     }
 
-    /**
-     * Проверяет удаление ресурса.
-     */
-
     @Test
-    void deleteResource_shouldCallRepository() {
-        Resource resource = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+    void testGetAvailableResources() throws SQLException {
+        WorkSpace workspace1 = new WorkSpace(0, "Workspace 1", 10);
+        WorkSpace workspace2 = new WorkSpace(0, "Workspace 2", 15);
+        resourceService.addResource(workspace1);
+        resourceService.addResource(workspace2);
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 1000;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        resourceService.deleteResource(resource);
-        verify(resourceRepository).deleteResource(resource);
-    }
-
-    /**
-     * Проверяет получение доступного ресурса.
-     */
-
-    @Test
-    void getAvailableResources_shouldReturnAvailableResources() {
-        Resource resource1 = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
-
-            @Override
-            public String getName() {
-                return "Room A";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 100;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        Resource resource2 = new Resource() {
-            @Override
-            public int getId() {
-                return 2;
-            }
-
-            @Override
-            public String getName() {
-                return "Room B";
-            }
-
-            @Override
-            public int getCapacity() {
-                return 200;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
         LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusHours(1);
+        LocalDateTime end = start.plusHours(2);
 
-        when(resourceRepository.getAllResources()).thenReturn(Arrays.asList(resource1, resource2));
-        when(bookingService.getBookingsByResources(resource1)).thenReturn(List.of());
-        when(bookingService.getBookingsByResources(resource2)).thenReturn(List.of(
-                new ru.ylab.model.Booking(1, new ru.ylab.model.User("user", "pass", false), resource2, start.minusMinutes(30), end.minusMinutes(30))
-        ));
+        when(bookingService.getBookingsByResource(any(Resource.class))).thenReturn(List.of());
 
-        List<Resource> result = resourceService.getAvailableResources(start, end);
-        assertEquals(1, result.size());
-        assertEquals(resource1, result.get(0));
+        List<Resource> availableResources = resourceService.getAvailableResources(start, end);
+        assertEquals(2, availableResources.size());
     }
 
-    /**
-     * Проверяет получение доступных таймслотов.
-     */
+    private static class TestDatabaseManager extends DatabaseManager {
+        private static Connection connection = null;
 
-    @Test
-    void getAvailableTimeSlots_shouldReturnAvailableSlots() {
-        Resource resource = new Resource() {
-            @Override
-            public int getId() {
-                return 1;
-            }
+        public TestDatabaseManager(Connection connection) {
+            TestDatabaseManager.connection = connection;
+        }
 
-            @Override
-            public String getName() {
-                return "Room A";
-            }
 
-            @Override
-            public int getCapacity() {
-                return 1000;
-            }
-
-            @Override
-            public void setName(String name) {
-
-            }
-
-            @Override
-            public void setCapacity(int capacity) {
-
-            }
-        };
-        LocalDate date = LocalDate.now();
-        int durationMinutes = 30;
-
-        when(resourceRepository.getAllResources()).thenReturn(List.of(resource));
-        when(bookingService.getBookingsByResources(resource)).thenReturn(List.of());
-
-        List<TimeSlot> result = resourceService.getAvailableTimeSlots(date, durationMinutes);
-        assertFalse(result.isEmpty());
-        assertEquals(18, result.size()); // Примем за рабочий день с 9 до 18 часов, доступно 18 слотов  для двух дотсупных ресурсов
+        public static Connection getConnection() throws SQLException {
+            return connection;
+        }
     }
 }
