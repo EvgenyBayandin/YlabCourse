@@ -32,7 +32,7 @@ public class AuthenticationService {
     public User authenticate(String username, String password) throws SQLException {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        if(!user.getPassword().equals(password)){
+        if (!user.getPassword().equals(password)) {
             throw new IllegalArgumentException("Wrong password");
         }
         currentUser = user;
@@ -44,7 +44,7 @@ public class AuthenticationService {
      *
      * @return true, or false
      */
-    public boolean isAuthenticated(){
+    public boolean isAuthenticated() {
         return currentUser != null;
     }
 
@@ -54,7 +54,7 @@ public class AuthenticationService {
      * @return object of the current user
      * @throws IllegalStateException if the user is not authenticated
      */
-    public User getCurrentUser(){
+    public User getCurrentUser() {
         if (!isAuthenticated()) {
             throw new IllegalStateException("User not authenticated");
         }
@@ -66,7 +66,7 @@ public class AuthenticationService {
      *
      * @return null
      */
-    public void logout(){
+    public void logout() {
         currentUser = null;
     }
 }
