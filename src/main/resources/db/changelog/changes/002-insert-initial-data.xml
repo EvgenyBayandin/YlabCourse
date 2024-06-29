@@ -6,10 +6,10 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd"
         logicalFilePath="db/changelog/changelog-master.xml">
 
-    <changeSet id="002" author="your_name">
+    <changeSet id="002" author="webdev">
         <insert tableName="users" schemaName="coworking_schema">
             <column name="username" value="admin"/>
-            <column name="password" value="password"/>
+            <column name="password" value="admin"/>
             <column name="is_admin" value="true"/>
         </insert>
 
