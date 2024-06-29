@@ -89,7 +89,7 @@ class UserRepositoryTest {
         user2.setAdmin(true);
         userRepository.addUser(user2);
 
-        List<User> allUsers = userRepository.getAllUsers();
+        List<User> allUsers = userRepository.getAllUsers(0, 2);
 
         assertEquals(2, allUsers.size());
     }
