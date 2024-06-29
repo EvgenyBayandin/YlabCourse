@@ -4,11 +4,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-/**
- * Тестовый класс для {@link OutputWriter}.
- * Проверяет работу класса.
- */
-
 class OutputWriterTest {
 
     private OutputWriter outputWriter;
@@ -18,9 +13,6 @@ class OutputWriterTest {
         outputWriter = Mockito.mock(OutputWriter.class);
     }
 
-    /**
-     * Проверяет метод вывода строки с переносом каретки.
-     */
 
     @Test
     void testPrintLine() {
@@ -30,10 +22,6 @@ class OutputWriterTest {
 
         Mockito.verify(outputWriter).printLine(message);
     }
-
-    /**
-     * Проверяет метод вывода строки без переноса каретки.
-     */
 
     @Test
     void testPrint() {

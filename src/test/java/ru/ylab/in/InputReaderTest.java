@@ -9,11 +9,6 @@ import org.mockito.Mockito;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
-/**
- * Тестовый класс для {@link InputReader}.
- * Проверяет работу класса.
- */
-
 public class InputReaderTest {
     private InputReader inputReader;
     private Supplier<Scanner> scannerSupplier;
@@ -28,10 +23,6 @@ public class InputReaderTest {
         };
     }
 
-    /**
-     * Проверяет метод ввода строки.
-     */
-
     @Test
     public void testReadLine() {
         Scanner scanner = scannerSupplier.get();
@@ -39,10 +30,6 @@ public class InputReaderTest {
         String actualLine = inputReader.readLine();
         assertEquals("Hello, World!", actualLine);
     }
-
-    /**
-     * Проверяет метод ввода числа.
-     */
 
     @Test
     public void testReadInt() {
