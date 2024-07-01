@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public void addBooking(Booking booking) throws SQLException {
-        String sql = "INSERT INTO coworking.schema.bookings (" +
+        String sql = "INSERT INTO coworking_schema.bookings (" +
                 "user_id, " +
                 "resource_id, " +
                 "start_time, " +
@@ -48,8 +49,10 @@ public class BookingRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, booking.getUserId());
             statement.setInt(2, booking.getResourceId());
-            statement.setString(3, booking.getStartTime().toString());
-            statement.setString(4, booking.getEndTime().toString());
+            statement.setTimestamp(3, Timestamp.valueOf(booking.getStartTime()));
+            statement.setTimestamp(4, Timestamp.valueOf(booking.getEndTime()));
+//            statement.setObject(3, booking.getStartTime());
+//            statement.setObject(4, booking.getEndTime());
             statement.executeUpdate();
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
@@ -72,7 +75,7 @@ public class BookingRepository {
         if (offset < 0 || limit < 1) {
             throw new IllegalArgumentException("Offset must be non-negative and limit must be positive");
         }
-        String sql = "SELECT * FROM  coworking.schema.bookings ORDER BY start_time DESC LIMIT? OFFSET?";
+        String sql = "SELECT * FROM coworking_schema.bookings ORDER BY start_time DESC LIMIT ? OFFSET ?";
         List<Booking> bookings = new ArrayList<>();
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -106,7 +109,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public Optional<Booking> findById(int id) throws SQLException {
-        String sql = "SELECT * FROM coworking.schema.bookings WHERE id=?";
+        String sql = "SELECT * FROM coworking_schema.bookings WHERE id = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, id);
@@ -127,7 +130,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public List<Booking> getBookingsByUser(User user) throws SQLException {
-        String sql = "SELECT * FROM coworking.schema.bookings WHERE user_id=?";
+        String sql = "SELECT * FROM coworking_schema.bookings WHERE user_id = ?";
         List<Booking> bookings = new ArrayList<>();
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -149,7 +152,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public List<Booking> getBookingsByResources(Resource resource) throws SQLException {
-        String sql = "SELECT * FROM coworking.schema.bookings WHERE resource_id=?";
+        String sql = "SELECT * FROM coworking_schema.bookings WHERE resource_id = ?";
         List<Booking> bookings = new ArrayList<>();
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -171,7 +174,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public List<Booking> getBookingsByDate(LocalDate date) throws SQLException {
-        String sql = "SELECT * FROM coworking.schema.bookings WHERE DATE(start_time) = ?";
+        String sql = "SELECT * FROM coworking_schema.bookings WHERE DATE(start_time) = ?";
         List<Booking> bookings = new ArrayList<>();
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -192,7 +195,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public void updateBooking(Booking booking) throws SQLException {
-        String sql = "UPDATE coworking.schema.bookings SET " +
+        String sql = "UPDATE coworking_schema.bookings SET " +
                 "user_id=?, " +
                 "resource_id=?, " +
                 "start_time=?, " +
@@ -216,7 +219,7 @@ public class BookingRepository {
      * @throws SQLException if a database access error occurs
      */
     public void deleteBooking(Booking booking) throws SQLException {
-        String sql = "DELETE FROM coworking.schema.bookings WHERE id=?";
+        String sql = "DELETE FROM coworking_schema.bookings WHERE id = ?";
         try (Connection connection = databaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, booking.getId());

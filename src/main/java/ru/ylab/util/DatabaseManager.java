@@ -59,8 +59,8 @@ public class DatabaseManager {
             connection = DriverManager.getConnection(dbUrl, dbUsername, dbPassword);
 //            System.out.println("Connection established successfully");
         } catch (SQLException e) {
-//            System.out.println("Failed to connect to: " + dbUrl);
-//            System.out.println("Username: " + dbUsername);
+            System.out.println("Failed to connect to: " + dbUrl);
+            System.out.println("Username: " + dbUsername);
             throw e;
         }
         return connection;

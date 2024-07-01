@@ -169,6 +169,10 @@ public class ResourceRepository {
         }
     }
 
+    public enum ResourceType {
+        WORKSPACE, CONFERENCE_ROOM
+    }
+
     /**
      * Creates a Resource object from a ResultSet.
      *
@@ -180,12 +184,12 @@ public class ResourceRepository {
         int id = resultSet.getInt("id");
         String name = resultSet.getString("name");
         int capacity = resultSet.getInt("capacity");
-        String type = resultSet.getString("type");
+        ResourceType type = ResourceType.valueOf(resultSet.getString("type").toUpperCase());
 
-        switch (type.toLowerCase()) {
-            case "workspace":
+        switch (type) {
+            case WORKSPACE:
                 return new WorkSpace(id, name, capacity);
-            case "conferenceroom":
+            case CONFERENCE_ROOM:
                 return new ConferenceRoom(id, name, capacity);
             default:
                 throw new IllegalArgumentException("Unknown resource type: " + type);

@@ -164,10 +164,10 @@ public class ConsoleUI {
      */
     private void login() {
         outputWriter.print("Enter username: ");
-        String username = inputReader.readLine();
+        String username = inputReader.readLine().trim();
 
         outputWriter.print("Enter password: ");
-        String password = inputReader.readLine();
+        String password = inputReader.readLine().trim();
 
         try {
             User user = authenticationService.authenticate(username, password);
@@ -184,9 +184,9 @@ public class ConsoleUI {
      */
     private void register() {
         outputWriter.print("Enter username: ");
-        String username = inputReader.readLine();
+        String username = inputReader.readLine().trim();
         outputWriter.print("Enter password: ");
-        String password = inputReader.readLine();
+        String password = inputReader.readLine().trim();
 
         try {
             User user = userService.register(username, password);
@@ -203,9 +203,9 @@ public class ConsoleUI {
      */
     private void viewAvailableResources() {
         outputWriter.print("Enter start date and time (yyyy-MM-dd HH:mm): ");
-        String startStr = inputReader.readLine();
+        String startStr = inputReader.readLine().trim();
         outputWriter.print("Enter end date and time (yyyy-MM-dd HH:mm): ");
-        String endStr = inputReader.readLine();
+        String endStr = inputReader.readLine().trim();
 
         try {
             LocalDateTime start = LocalDateTime.parse(startStr, DATE_TIME_FORMATTER);
@@ -234,9 +234,9 @@ public class ConsoleUI {
      */
     private void makeBooking() {
         outputWriter.print("Enter start date and time (yyyy-MM-dd HH:mm): ");
-        String startStr = inputReader.readLine();
+        String startStr = inputReader.readLine().trim();
         outputWriter.print("Enter end date and time (yyyy-MM-dd HH:mm): ");
-        String endStr = inputReader.readLine();
+        String endStr = inputReader.readLine().trim();
 
         try {
             LocalDateTime start = LocalDateTime.parse(startStr, DATE_TIME_FORMATTER);
@@ -468,7 +468,7 @@ public class ConsoleUI {
      */
     private List<Booking> filterBookingsByDate() {
         outputWriter.print("Enter date (yyyy-MM-dd): ");
-        String dateStr = inputReader.readLine();
+        String dateStr = inputReader.readLine().trim();
         try {
             LocalDate date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd"));
             return bookingService.getBookingsByDate(date);
@@ -634,7 +634,7 @@ public class ConsoleUI {
         }
 
         outputWriter.print("Enter resource name: ");
-        String name = inputReader.readLine();
+        String name = inputReader.readLine().trim();
 
         Integer capacity = null;
         while (capacity == null) {
@@ -715,7 +715,7 @@ public class ConsoleUI {
                 }
 
                 outputWriter.print("Enter new name (or press Enter to keep current): ");
-                String newName = inputReader.readLine();
+                String newName = inputReader.readLine().trim();
                 if (!newName.isEmpty()) {
                     resourceToUpdate.setName(newName);
                 }
