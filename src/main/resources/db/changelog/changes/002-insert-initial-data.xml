@@ -4,51 +4,63 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd"
-        logicalFilePath="db/changelog/changelog-master.xml">
+        logicalFilePath="db/changelog/changelog.xml">
 
-    <changeSet id="002" author="webdev">
+    <changeSet id="009-insert-admin-user" author="webdev">
         <insert tableName="users" schemaName="coworking_schema">
             <column name="username" value="admin"/>
-            <column name="password" value="admin"/>
-            <column name="is_admin" value="true"/>
-        </insert>
-
-
-        <insert tableName="users" schemaName="coworking_schema">
-            <column name="username" value="user"/>
             <column name="password" value="password"/>
-            <column name="is_admin" value="false"/>
+            <column name="is_admin" valueBoolean="true"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="010-insert-user" author="webdev">
+        <insert tableName="users" schemaName="coworking_schema">
+            <column name="username" value="username"/>
+            <column name="password" value="password"/>
+            <column name="is_admin" valueBoolean="false"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="011-insert-workspace-a" author="webdev">
         <insert tableName="workspaces" schemaName="coworking_schema">
             <column name="name" value="Workspace A"/>
             <column name="capacity" value="100"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="012-insert-workspace-b" author="webdev">
         <insert tableName="workspaces" schemaName="coworking_schema">
             <column name="name" value="Workspace B"/>
             <column name="capacity" value="200"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="013-insert-workspace-c" author="webdev">
         <insert tableName="workspaces" schemaName="coworking_schema">
             <column name="name" value="Workspace C"/>
-            <column name="capacity" value="50"/>
+            <column name="capacity" value="300"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="014-insert-conference-room-a" author="webdev">
         <insert tableName="conference_rooms" schemaName="coworking_schema">
             <column name="name" value="Conference room A"/>
             <column name="capacity" value="10"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="015-insert-conference-room-b" author="webdev">
         <insert tableName="conference_rooms" schemaName="coworking_schema">
             <column name="name" value="Conference room B"/>
             <column name="capacity" value="20"/>
         </insert>
+    </changeSet>
 
+    <changeSet id="016-insert-conference-room-c" author="webdev">
         <insert tableName="conference_rooms" schemaName="coworking_schema">
             <column name="name" value="Conference room C"/>
-            <column name="capacity" value="50"/>
+            <column name="capacity" value="30"/>
         </insert>
-
     </changeSet>
 </databaseChangeLog>
