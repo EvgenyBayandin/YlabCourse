@@ -5,8 +5,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -49,14 +47,14 @@ public class BookingRepository {
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setInt(1, booking.getUserId());
             statement.setInt(2, booking.getResourceId());
-            statement.setTimestamp(3, Timestamp.valueOf(booking.getStartTime()));
-            statement.setTimestamp(4, Timestamp.valueOf(booking.getEndTime()));
-//            statement.setObject(3, booking.getStartTime());
-//            statement.setObject(4, booking.getEndTime());
-            statement.executeUpdate();
+            statement.setTimestamp(3, booking.getStartTime());
+            statement.setTimestamp(4, booking.getEndTime());
+
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
                     booking.setId(resultSet.getInt("id"));
+                } else {
+                    throw new SQLException("Creating booking failed, no ID obtained.");
                 }
             }
         }
@@ -66,9 +64,9 @@ public class BookingRepository {
      * Retrieves all bookings from the database with pagination.
      *
      * @param offset the number of records to skip
-     * @param limit the maximum number of records to return
+     * @param limit  the maximum number of records to return
      * @return a List of Booking objects from the database
-     * @throws SQLException if a database access error occurs
+     * @throws SQLException             if a database access error occurs
      * @throws IllegalArgumentException if offset is negative or limit is less than 1
      */
     public List<Booking> getAllBookings(int offset, int limit) throws SQLException {
@@ -173,7 +171,7 @@ public class BookingRepository {
      * @return List containing the Booking if found
      * @throws SQLException if a database access error occurs
      */
-    public List<Booking> getBookingsByDate(LocalDate date) throws SQLException {
+    public List<Booking> getBookingsByDate(Timestamp date) throws SQLException {
         String sql = "SELECT * FROM coworking_schema.bookings WHERE DATE(start_time) = ?";
         List<Booking> bookings = new ArrayList<>();
         try (Connection connection = databaseManager.getConnection();
@@ -238,8 +236,8 @@ public class BookingRepository {
         int id = resultSet.getInt("id");
         int userId = resultSet.getInt("user_id");
         int resourceId = resultSet.getInt("resource_id");
-        LocalDateTime startTime = LocalDateTime.parse(resultSet.getString("start_time"));
-        LocalDateTime endTime = LocalDateTime.parse(resultSet.getString("end_time"));
+        Timestamp startTime = resultSet.getTimestamp("start_time");
+        Timestamp endTime = resultSet.getTimestamp("end_time");
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new SQLException("User not found for id: " + userId));
@@ -248,4 +246,5 @@ public class BookingRepository {
 
         return new Booking(id, user, resource, startTime, endTime);
     }
+
 }

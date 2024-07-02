@@ -1,5 +1,6 @@
 package ru.ylab.model;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import lombok.AllArgsConstructor;
@@ -9,14 +10,15 @@ import lombok.Data;
 @AllArgsConstructor
 public class TimeSlot {
     private Resource resource;
-    private LocalDateTime start;
-    private LocalDateTime end;
+    private Timestamp start;
+    private Timestamp end;
 
     @Override
     public String toString() {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         return "Resource: " + resource.getName() +
                 " (ID: " + resource.getId() + ")" +
-                ", Start: " + start.format(DateTimeFormatter.ofPattern("HH:mm")) +
-                ", End: " + end.format(DateTimeFormatter.ofPattern("HH:mm"));
+                ", Start: " + start.toLocalDateTime().format(formatter) +
+                ", End: " + end.toLocalDateTime().format(formatter);
     }
 }

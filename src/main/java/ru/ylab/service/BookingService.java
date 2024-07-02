@@ -1,8 +1,7 @@
 package ru.ylab.service;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 import ru.ylab.model.Booking;
@@ -48,18 +47,21 @@ public class BookingService {
      * @throws IllegalStateException    if there's a booking conflict
      * @throws IllegalArgumentException if the user or resource is not found
      */
-    public Booking createBooking(User user, Resource resource, LocalDateTime start, LocalDateTime end) throws SQLException {
+    public Booking createBooking(User user, Resource resource, Timestamp start, Timestamp end) throws SQLException {
         if (hasBookingConflict(resource, start, end)) {
             throw new IllegalStateException("Booking conflict: The resource is not available for the selected time period");
         }
+
         Optional<User> currentUser = userRepository.findById(user.getId());
         if (currentUser.isEmpty()) {
             throw new IllegalArgumentException("User not found");
         }
+
         Optional<Resource> currentResource = resourceRepository.findById(resource.getId());
         if (currentResource.isEmpty()) {
             throw new IllegalArgumentException("Resource not found");
         }
+
         Booking booking = new Booking(0, currentUser.get(), currentResource.get(), start, end);
         bookingRepository.addBooking(booking);
         return booking;
@@ -104,7 +106,7 @@ public class BookingService {
      * @return a list of bookings for the date
      * @throws SQLException if a database access error occurs
      */
-    public List<Booking> getBookingsByDate(LocalDate date) throws SQLException {
+    public List<Booking> getBookingsByDate(Timestamp date) throws SQLException {
         return bookingRepository.getBookingsByDate(date);
     }
 
@@ -117,11 +119,11 @@ public class BookingService {
      * @return true if there's a conflict, false otherwise
      * @throws SQLException if a database access error occurs
      */
-    public boolean hasBookingConflict(Resource resource, LocalDateTime start, LocalDateTime end) throws SQLException {
+    public boolean hasBookingConflict(Resource resource, Timestamp start, Timestamp end) throws SQLException {
         List<Booking> resourceBookings = bookingRepository.getBookingsByResources(resource);
         return resourceBookings.stream()
-                .anyMatch(booking -> (start.isBefore(booking.getEndTime()) && end.isAfter(booking.getStartTime())) ||
-                        start.isEqual(booking.getStartTime()) || end.isEqual(booking.getEndTime()));
+                .anyMatch(booking -> (start.before(booking.getEndTime()) && end.after(booking.getStartTime())) ||
+                        start.equals(booking.getStartTime()) || end.equals(booking.getEndTime()));
     }
 
     /**
@@ -158,4 +160,5 @@ public class BookingService {
         }
         bookingRepository.updateBooking(booking);
     }
+
 }

@@ -10,7 +10,7 @@ public class InputReader implements ConsoleReader{
     }
 
     public String readLine()  {
-        return scanner.nextLine();
+        return scanner.nextLine().trim();
     }
 
     public int readInt()   {

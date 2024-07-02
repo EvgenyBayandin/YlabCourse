@@ -1,16 +1,16 @@
 package ru.ylab.service;
 
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 import ru.ylab.model.Booking;
 import ru.ylab.model.Resource;
 import ru.ylab.model.TimeSlot;
 import ru.ylab.repository.ResourceRepository;
+import ru.ylab.util.ResourceNotFoundException;
 
 /**
  * Service class for managing resources.
@@ -45,12 +45,16 @@ public class ResourceService {
      *
      * @param id the ID of the resource to retrieve
      * @return the resource with the given ID
-     * @throws SQLException             if a database error occurs
-     * @throws IllegalArgumentException if no resource is found with the given ID
+     * @throws SQLException              if a database error occurs
+     * @throws ResourceNotFoundException if no resource is found with the given ID
      */
-    public Resource getResourceById(int id) throws SQLException {
-        return resourceRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Resource not found"));
+    public Resource getResourceById(int id) throws SQLException, ResourceNotFoundException {
+        try {
+            return resourceRepository.findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("Resource not found with id: " + id));
+        } catch (SQLException e) {
+            throw new SQLException("Error while fetching resource with id: " + id, e);
+        }
     }
 
     /**
@@ -102,7 +106,7 @@ public class ResourceService {
      * @return a list of available resources
      * @throws SQLException if a database error occurs
      */
-    public List<Resource> getAvailableResources(LocalDateTime start, LocalDateTime end) throws SQLException {
+    public List<Resource> getAvailableResources(Timestamp start, Timestamp end) throws SQLException {
         List<Resource> allResources = resourceRepository.getAllResources();
         return allResources.stream()
                 .filter(resource -> {
@@ -115,11 +119,11 @@ public class ResourceService {
                 .collect(Collectors.toList());
     }
 
-    private boolean isResourceAvailable(Resource resource, LocalDateTime start, LocalDateTime end) throws SQLException {
+    private boolean isResourceAvailable(Resource resource, Timestamp start, Timestamp end) throws SQLException {
         List<Booking> resourceBookings = bookingService.getBookingsByResource(resource);
         return resourceBookings.stream()
                 .noneMatch(booking ->
-                        (start.isBefore(booking.getEndTime()) && end.isAfter(booking.getStartTime())) ||
+                        (start.before(booking.getEndTime()) && end.after(booking.getStartTime())) ||
                                 start.equals(booking.getStartTime()) || end.equals(booking.getEndTime())
                 );
     }
@@ -141,7 +145,7 @@ public class ResourceService {
      * @return a list of available time slots
      * @throws SQLException if a database error occurs
      */
-    public List<TimeSlot> getAvailableTimeSlots(LocalDate date, int durationMinutes) throws SQLException {
+    public List<TimeSlot> getAvailableTimeSlots(Timestamp date, int durationMinutes) throws SQLException {
         List<Resource> allResources = resourceRepository.getAllResources();
         List<TimeSlot> availableSlots = new ArrayList<>();
 
@@ -153,34 +157,60 @@ public class ResourceService {
         return availableSlots;
     }
 
-    private List<TimeSlot> getAvailableSlotsForResource(Resource resource, LocalDate date, int durationMinutes) throws SQLException {
+    private List<TimeSlot> getAvailableSlotsForResource(Resource resource, Timestamp date, int durationMinutes) throws SQLException {
         List<TimeSlot> availableSlots = new ArrayList<>();
-        LocalTime startTime = LocalTime.of(9, 0); // Предполагаем, что рабочий день начинается в 9:00
-        LocalTime endTime = LocalTime.of(18, 0);  // и заканчивается в 18:00
+
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.set(Calendar.HOUR_OF_DAY, 9);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        Timestamp startTime = new Timestamp(calendar.getTimeInMillis());
+
+        calendar.set(Calendar.HOUR_OF_DAY, 18);
+        Timestamp endTime = new Timestamp(calendar.getTimeInMillis());
 
         List<Booking> resourceBookings = bookingService.getBookingsByResource(resource)
                 .stream()
-                .filter(booking -> booking.getStartTime().toLocalDate().equals(date))
+                .filter(booking -> isSameDay(booking.getStartTime(), date))
                 .collect(Collectors.toList());
 
-        while (startTime.plusMinutes(durationMinutes).isBefore(endTime) || startTime.plusMinutes(durationMinutes).equals(endTime)) {
-            LocalDateTime slotStart = LocalDateTime.of(date, startTime);
-            LocalDateTime slotEnd = slotStart.plusMinutes(durationMinutes);
+        while (addMinutes(startTime, durationMinutes).before(endTime) || addMinutes(startTime, durationMinutes).equals(endTime)) {
+            Timestamp slotStart = new Timestamp(startTime.getTime());
+            Timestamp slotEnd = addMinutes(slotStart, durationMinutes);
 
             if (isSlotAvailable(slotStart, slotEnd, resourceBookings)) {
                 availableSlots.add(new TimeSlot(resource, slotStart, slotEnd));
             }
 
-            startTime = startTime.plusMinutes(30); // Шаг в 30 минут
+            startTime = addMinutes(startTime, 30); // Шаг в 30 минут
         }
 
         return availableSlots;
     }
 
-    private boolean isSlotAvailable(LocalDateTime start, LocalDateTime end, List<Booking> bookings) {
+    private boolean isSameDay(Timestamp t1, Timestamp t2) {
+        Calendar cal1 = Calendar.getInstance();
+        Calendar cal2 = Calendar.getInstance();
+        cal1.setTime(t1);
+        cal2.setTime(t2);
+        return cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR) &&
+                cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR);
+    }
+
+    private Timestamp addMinutes(Timestamp timestamp, int minutes) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(timestamp);
+        calendar.add(Calendar.MINUTE, minutes);
+        return new Timestamp(calendar.getTimeInMillis());
+    }
+
+    private boolean isSlotAvailable(Timestamp start, Timestamp end, List<Booking> bookings) {
         return bookings.stream()
                 .noneMatch(booking ->
-                        (start.isBefore(booking.getEndTime()) && end.isAfter(booking.getStartTime())) ||
+                        (start.before(booking.getEndTime()) && end.after(booking.getStartTime())) ||
                                 start.equals(booking.getStartTime()) || end.equals(booking.getEndTime()));
     }
+
 }

@@ -195,4 +195,5 @@ public class ResourceRepository {
                 throw new IllegalArgumentException("Unknown resource type: " + type);
         }
     }
+
 }
