@@ -3,6 +3,8 @@ package ru.ylab.service;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -153,8 +155,9 @@ class BookingServiceTest {
 
             }
         };
-        LocalDateTime start = LocalDateTime.now().plusHours(1);
-        LocalDateTime end = start.plusHours(2);
+
+        Timestamp start = Timestamp.valueOf(LocalDateTime.now().plusHours(1));
+        Timestamp end = Timestamp.valueOf(LocalDateTime.now().plusHours(3));
 
         when(bookingRepository.getBookingsByResources(resource)).thenReturn(List.of());
 
@@ -207,10 +210,13 @@ class BookingServiceTest {
 
             }
         };
-        LocalDateTime start = LocalDateTime.now().plusHours(1);
-        LocalDateTime end = start.plusHours(2);
 
-        Booking existingBooking = new Booking(1, user, resource, start.minusMinutes(30), end.minusMinutes(30));
+        Timestamp start = Timestamp.valueOf(LocalDateTime.now().plusHours(1));
+        Timestamp end = Timestamp.valueOf(LocalDateTime.now().plusHours(3));
+
+        Booking existingBooking = new Booking(1, user, resource,
+                Timestamp.valueOf(start.toLocalDateTime().minusMinutes(30)),
+                Timestamp.valueOf(end.toLocalDateTime().minusMinutes(30)));
         when(bookingRepository.getBookingsByResources(resource)).thenReturn(List.of(existingBooking));
 
         assertThatThrownBy(() -> bookingService.createBooking(user, resource, start, end))
@@ -254,7 +260,8 @@ class BookingServiceTest {
 
             }
         },
-                LocalDateTime.now(), LocalDateTime.now().plusHours(1));
+                Timestamp.valueOf(LocalDateTime.now()),
+                Timestamp.valueOf(LocalDateTime.now().plusHours(1)));
 
         bookingService.cancelBooking(booking);
 
@@ -298,7 +305,9 @@ class BookingServiceTest {
                     public void setCapacity(int capacity) {
 
                     }
-                }, LocalDateTime.now(), LocalDateTime.now().plusHours(1)),
+                }, Timestamp.valueOf(LocalDateTime.now()),
+                        Timestamp.valueOf(LocalDateTime.now().plusHours(1))),
+
                 new Booking(2, user, new Resource() {
                     @Override
                     public int getId() {
@@ -329,7 +338,8 @@ class BookingServiceTest {
                     public void setCapacity(int capacity) {
 
                     }
-                }, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(2))
+                }, Timestamp.valueOf(LocalDateTime.now().plusDays(1)),
+                        Timestamp.valueOf(LocalDateTime.now().plusDays(1).plusHours(2)))
         );
 
         when(bookingRepository.getBookingsByUser(user)).thenReturn(expectedBookings);
@@ -376,8 +386,12 @@ class BookingServiceTest {
             }
         };
         List<Booking> expectedBookings = Arrays.asList(
-                new Booking(1, new User("a", "a", true), resource, LocalDateTime.now(), LocalDateTime.now().plusHours(1)),
-                new Booking(2, new User("u", "u", false), resource, LocalDateTime.now().plusDays(1), LocalDateTime.now().plusDays(1).plusHours(2))
+                new Booking(1, new User("a", "a", true), resource,
+                        Timestamp.valueOf(LocalDateTime.now()),
+                        Timestamp.valueOf(LocalDateTime.now().plusHours(1))),
+                new Booking(2, new User("u", "u", false), resource,
+                        Timestamp.valueOf(LocalDateTime.now().plusDays(1)),
+                        Timestamp.valueOf(LocalDateTime.now().plusDays(1).plusHours(2)))
         );
 
         when(bookingRepository.getBookingsByResources(resource)).thenReturn(expectedBookings);
@@ -393,79 +407,85 @@ class BookingServiceTest {
     @Test
     void getBookingsByDate_shouldReturnBookingsForSpecificDate() throws SQLException {
         LocalDate targetDate = LocalDate.now();
+        Timestamp targetTimestamp = Timestamp.valueOf(targetDate.atStartOfDay());
+
+        Resource roomA = new Resource() {
+            @Override
+            public int getId() {
+                return 1;
+            }
+
+            @Override
+            public String getName() {
+                return "Room A";
+            }
+
+            @Override
+            public int getCapacity() {
+                return 200;
+            }
+
+            @Override
+            public void setId(int id) {
+            }
+
+            @Override
+            public void setName(String name) {
+            }
+
+            @Override
+            public void setCapacity(int capacity) {
+            }
+        };
+
+        Resource roomB = new Resource() {
+            @Override
+            public int getId() {
+                return 2;
+            }
+
+            @Override
+            public String getName() {
+                return "Room B";
+            }
+
+            @Override
+            public int getCapacity() {
+                return 300;
+            }
+
+            @Override
+            public void setId(int id) {
+            }
+
+            @Override
+            public void setName(String name) {
+            }
+
+            @Override
+            public void setCapacity(int capacity) {
+            }
+        };
+
         List<Booking> allBookings = Arrays.asList(
-                new Booking(1, new User("a", "a", true), new Resource() {
-                    @Override
-                    public int getId() {
-                        return 1;
-                    }
-
-                    @Override
-                    public String getName() {
-                        return "Room A";
-                    }
-
-                    @Override
-                    public int getCapacity() {
-                        return 200;
-                    }
-
-                    @Override
-                    public void setId(int id) {
-
-                    }
-
-                    @Override
-                    public void setName(String name) {
-
-                    }
-
-                    @Override
-                    public void setCapacity(int capacity) {
-
-                    }
-                },
-                        targetDate.atTime(10, 0), targetDate.atTime(11, 0)),
-                new Booking(2, new User("u", "u", false), new Resource() {
-                    @Override
-                    public int getId() {
-                        return 2;
-                    }
-
-                    @Override
-                    public String getName() {
-                        return "Room B";
-                    }
-
-                    @Override
-                    public int getCapacity() {
-                        return 300;
-                    }
-
-                    @Override
-                    public void setId(int id) {
-
-                    }
-
-                    @Override
-                    public void setName(String name) {
-
-                    }
-
-                    @Override
-                    public void setCapacity(int capacity) {
-
-                    }
-                },
-                        targetDate.plusDays(1).atTime(14, 0), targetDate.plusDays(1).atTime(15, 0))
+                new Booking(1, new User("a", "a", true), roomA,
+                        Timestamp.valueOf(targetDate.atTime(10, 0)),
+                        Timestamp.valueOf(targetDate.atTime(11, 0))),
+                new Booking(2, new User("u", "u", false), roomB,
+                        Timestamp.valueOf(targetDate.plusDays(1).atTime(14, 0)),
+                        Timestamp.valueOf(targetDate.plusDays(1).atTime(15, 0)))
         );
 
-        when(bookingRepository.getAllBookings()).thenReturn(allBookings);
+        when(bookingRepository.getBookingsByDate(targetTimestamp)).thenReturn(
+                allBookings.stream()
+                        .filter(b -> b.getStartTime().toLocalDateTime().toLocalDate().equals(targetDate))
+                        .collect(Collectors.toList())
+        );
 
-        List<Booking> result = bookingService.getBookingsByDate(targetDate);
+        List<Booking> result = bookingService.getBookingsByDate(targetTimestamp);
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).getStartTime().toLocalDate()).isEqualTo(targetDate);
+        assertThat(result.get(0).getStartTime().toLocalDateTime().toLocalDate()).isEqualTo(targetDate);
     }
 
     private static class TestDatabaseManager extends DatabaseManager {

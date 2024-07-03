@@ -1,0 +1,125 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-schema
+      author: webdev
+      changes:
+        - sql:
+            sql: CREATE SCHEMA IF NOT EXISTS coworking_test_schema;
+
+  - changeSet:
+      id: create-users-table
+      author: webdev
+      changes:
+        - createTable:
+            schemaName: coworking_test_schema
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: username
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: is_admin
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-resources-table
+      author: webdev
+      changes:
+        - createTable:
+            schemaName: coworking_test_schema
+            tableName: resources
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: capacity
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-bookings-table
+      author: webdev
+      changes:
+        - createTable:
+            schemaName: coworking_test_schema
+            tableName: bookings
+            columns:
+              - column:
+                  name: id
+                  type: serial
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: resource_id
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: start_time
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: end_time
+                  type: timestamp
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: add-foreign-keys
+      author: webdev
+      changes:
+        - addForeignKeyConstraint:
+            baseColumnNames: user_id
+            baseTableName: bookings
+            baseTableSchemaName: coworking_test_schema
+            constraintName: fk_booking_user
+            referencedColumnNames: id
+            referencedTableName: users
+            referencedTableSchemaName: coworking_test_schema
+        - addForeignKeyConstraint:
+            baseColumnNames: resource_id
+            baseTableName: bookings
+            baseTableSchemaName: coworking_test_schema
+            constraintName: fk_booking_resource
+            referencedColumnNames: id
+            referencedTableName: resources
+            referencedTableSchemaName: coworking_test_schema

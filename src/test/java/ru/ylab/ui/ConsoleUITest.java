@@ -19,6 +19,7 @@ import ru.ylab.service.BookingService;
 import ru.ylab.service.ResourceService;
 import ru.ylab.service.UserService;
 import ru.ylab.util.DatabaseManager;
+import ru.ylab.util.ResourceNotFoundException;
 
 import static org.mockito.Mockito.*;
 
@@ -76,35 +77,31 @@ public class ConsoleUITest {
     }
 
     @Test
-    void testLogin() throws SQLException {
-        // Arrange
+    void testLogin() throws SQLException, ResourceNotFoundException {
+
         when(inputReader.readLine()).thenReturn("testuser", "testpass");
         when(authenticationService.authenticate("testuser", "testpass"))
                 .thenReturn(new User(1, "testuser", "testpass", false));
 
-        // Act
         consoleUI.run();
 
-        // Assert
         verify(outputWriter).printLine("Login successful. Welcome, testuser");
     }
 
     @Test
-    void testRegister() throws SQLException {
-        // Arrange
+    void testRegister() throws SQLException, ResourceNotFoundException {
+
         when(inputReader.readLine()).thenReturn("newuser", "newpass");
         when(userService.register("newuser", "newpass"))
                 .thenReturn(new User(2, "newuser", "newpass", false));
 
-        // Act
         consoleUI.run();
 
-        // Assert
         verify(outputWriter).printLine("Registration successful. Please login.");
     }
 
     /*
-    ToDo добавить тесты !!!
+    ToDo не забудь добавить тесты !!!
     */
 
     class TestDatabaseManager extends DatabaseManager {
@@ -118,4 +115,5 @@ public class ConsoleUITest {
             return connection;
         }
     }
+
 }

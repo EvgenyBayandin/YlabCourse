@@ -1,5 +1,6 @@
 package ru.ylab.service;
 
+import java.sql.Timestamp;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -16,6 +17,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
+import ru.ylab.util.ResourceNotFoundException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -54,7 +56,7 @@ public class ResourceServiceTest {
     }
 
     @Test
-    void testAddAndGetResource() throws SQLException {
+    void testAddAndGetResource() throws SQLException, ResourceNotFoundException {
         WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
         resourceService.addResource(workspace);
 
@@ -95,7 +97,7 @@ public class ResourceServiceTest {
     }
 
     @Test
-    void testUpdateResource() throws SQLException {
+    void testUpdateResource() throws SQLException, ResourceNotFoundException {
         WorkSpace workspace = new WorkSpace(0, "Test Workspace", 10);
         resourceService.addResource(workspace);
 
@@ -125,8 +127,8 @@ public class ResourceServiceTest {
         resourceService.addResource(workspace1);
         resourceService.addResource(workspace2);
 
-        LocalDateTime start = LocalDateTime.now();
-        LocalDateTime end = start.plusHours(2);
+        Timestamp start = Timestamp.valueOf(LocalDateTime.now());
+        Timestamp end = Timestamp.valueOf(LocalDateTime.now().plusHours(2));
 
         when(bookingService.getBookingsByResource(any(Resource.class))).thenReturn(List.of());
 
